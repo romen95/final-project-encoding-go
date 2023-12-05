@@ -30,10 +30,11 @@ type MyEncoder interface {
 
 // Encoding перекодирует файл из JSON в YAML
 func (j *JSONData) Encoding() error {
+
 	var yamlData YAMLData
 
 	// создаем файл yamlOutput.yml
-	f, err := os.Create("yamlOutput.yml")
+	f, err := os.Create(j.FileOutput)
 	if err != nil {
 		fmt.Printf("ошибка при создании файла: %s", err.Error())
 		return err
@@ -42,21 +43,21 @@ func (j *JSONData) Encoding() error {
 	// когда программа завершится, надо закрыть дескриптор файла
 	defer f.Close()
 
-	// читаем файл JSON
+	// читаем файл jsonInput.json
 	jsonFile, err := os.ReadFile(j.FileInput)
 	if err != nil {
 		fmt.Printf("ошибка чтения файла: %s", err.Error())
 		return err
 	}
 
-	// десериализуем JSON в YAML
-	if err = json.Unmarshal(jsonFile, &yamlData); err != nil {
+	// десериализуем
+	if err = yaml.Unmarshal(jsonFile, &yamlData.DockerCompose); err != nil {
 		fmt.Printf("ошибка при десериализации: %s", err.Error())
 		return err
 	}
 
-	// сериализуем YAML
-	yamlBytes, err := yaml.Marshal(&yamlData)
+	// сериализуем
+	yamlBytes, err := yaml.Marshal(&yamlData.DockerCompose)
 	if err != nil {
 		fmt.Printf("ошибка при сериализации yaml: %s", err.Error())
 		return err
@@ -74,18 +75,43 @@ func (j *JSONData) Encoding() error {
 
 // Encoding перекодирует файл из YAML в JSON
 func (y *YAMLData) Encoding() error {
+
 	var jsonData JSONData
 
-	// читаем файл YAML
+	// создаем файл jsonOutput.json
+	f, err := os.Create(y.FileOutput)
+	if err != nil {
+		fmt.Printf("ошибка при создании файла: %s", err.Error())
+		return err
+	}
+
+	// когда программа завершится, надо закрыть дескриптор файла
+	defer f.Close()
+
+	// читаем файл yamlInput.yaml
 	yamlFile, err := os.ReadFile(y.FileInput)
 	if err != nil {
 		fmt.Printf("ошибка чтения файла: %s", err.Error())
 		return err
 	}
 
-	// десериализуем YAML в JSON
-	if err = yaml.Unmarshal(yamlFile, &jsonData); err != nil {
+	// десериализуем
+	if err = yaml.Unmarshal(yamlFile, &jsonData.DockerCompose); err != nil {
 		fmt.Printf("ошибка при десериализации: %s", err.Error())
+		return err
+	}
+
+	// сериализуем
+	jsonBytes, err := json.Marshal(&jsonData.DockerCompose)
+	if err != nil {
+		fmt.Printf("ошибка при сериализации yaml: %s", err.Error())
+		return err
+	}
+
+	// записываем слайс байт в файл
+	_, err = f.Write(jsonBytes)
+	if err != nil {
+		fmt.Printf("ошибка при записи данных в файл: %s", err.Error())
 		return err
 	}
 
