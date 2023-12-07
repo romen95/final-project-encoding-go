@@ -9,6 +9,22 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+type NotFoundJSONError struct {
+	JSONData JSONData
+}
+
+func (err NotFoundJSONError) Error() string {
+	return fmt.Sprintf("Данные в структуре %d не найдены", err.JSONData.DockerCompose)
+}
+
+type NotFoundYAMLrror struct {
+	YAMLData YAMLData
+}
+
+func (err NotFoundYAMLrror) Error() string {
+	return fmt.Sprintf("Данные в структуре %d не найдены", err.YAMLData.DockerCompose)
+}
+
 // JSONData тип для перекодирования из JSON в YAML
 type JSONData struct {
 	DockerCompose *models.DockerCompose
@@ -31,8 +47,6 @@ type MyEncoder interface {
 // Encoding перекодирует файл из JSON в YAML
 func (j *JSONData) Encoding() error {
 
-	var yamlData YAMLData
-
 	// создаем файл yamlOutput.yml
 	f, err := os.Create(j.FileOutput)
 	if err != nil {
@@ -51,13 +65,14 @@ func (j *JSONData) Encoding() error {
 	}
 
 	// десериализуем
-	if err = yaml.Unmarshal(jsonFile, &yamlData.DockerCompose); err != nil {
-		fmt.Printf("ошибка при десериализации: %s", err.Error())
+	if err = yaml.Unmarshal(jsonFile, &j.DockerCompose); err != nil {
+		var err NotFoundJSONError
+		err.JSONData.DockerCompose = j.DockerCompose
 		return err
 	}
 
 	// сериализуем
-	yamlBytes, err := yaml.Marshal(&yamlData.DockerCompose)
+	yamlBytes, err := yaml.Marshal(&j.DockerCompose)
 	if err != nil {
 		fmt.Printf("ошибка при сериализации yaml: %s", err.Error())
 		return err
@@ -75,8 +90,6 @@ func (j *JSONData) Encoding() error {
 
 // Encoding перекодирует файл из YAML в JSON
 func (y *YAMLData) Encoding() error {
-
-	var jsonData JSONData
 
 	// создаем файл jsonOutput.json
 	f, err := os.Create(y.FileOutput)
@@ -96,13 +109,14 @@ func (y *YAMLData) Encoding() error {
 	}
 
 	// десериализуем
-	if err = yaml.Unmarshal(yamlFile, &jsonData.DockerCompose); err != nil {
-		fmt.Printf("ошибка при десериализации: %s", err.Error())
+	if err = yaml.Unmarshal(yamlFile, &y.DockerCompose); err != nil {
+		var err NotFoundYAMLrror
+		err.YAMLData.DockerCompose = y.DockerCompose
 		return err
 	}
 
 	// сериализуем
-	jsonBytes, err := json.Marshal(&jsonData.DockerCompose)
+	jsonBytes, err := json.Marshal(&y.DockerCompose)
 	if err != nil {
 		fmt.Printf("ошибка при сериализации yaml: %s", err.Error())
 		return err
